@@ -164,7 +164,6 @@ templates:
             thepiratebay.org: 10 seconds
             thepiratebay.se: 10 seconds
             nyaa.se: 3 seconds
-            extratorrent: 3 seconds
             limetorrents: 3 seconds
             rarbg: 3 seconds
             1337x: 3 seconds
@@ -330,8 +329,6 @@ tasks:
             from:
                 - piratebay:
                       category: highres tv
-                - extratorrent:
-                      category: tv
                 - limetorrents:
                       category: tv
                 - rarbg:
@@ -434,8 +431,6 @@ tasks:
             from:
                 - piratebay:
                       category: movies
-                - extratorrent:
-                      category: movies
                 - limetorrents:
                       category: movies
                 - rarbg:
@@ -477,8 +472,6 @@ tasks:
             from:
                 - piratebay:
                       category: highres movies
-                - extratorrent:
-                      category: movies
                 - limetorrents:
                       category: movies
                 - 1337x: yes
