@@ -321,21 +321,21 @@ tasks:
             timeout: 10 seconds
             force: yes
         if:
-          - trakt_watched: reject
-          discover:
-              release_estimations: strict
-              interval: 15 minutes
-              what:
-                  - next_series_episodes:
-                        from_start: yes
-              from:
-                  - piratebay:
-                        category: highres tv
-                  - limetorrents:
-                        category: tv
-                  - rarbg:
-                        category: [1, 18, 41, 49]
-                  - 1337x: yes
+            - trakt_watched: reject
+        discover:
+            release_estimations: strict
+            interval: 15 minutes
+            what:
+                - next_series_episodes:
+                      from_start: yes
+            from:
+                - piratebay:
+                      category: highres tv
+                - limetorrents:
+                      category: tv
+                - rarbg:
+                      category: [1, 18, 41, 49]
+                - 1337x: yes
 
     ##### Remove manually movies downloaded from the movie queue and trakt list
     #
