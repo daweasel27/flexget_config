@@ -293,7 +293,8 @@ tasks:
         exec:
             on_output:
                 for_accepted: rm -f "{{location}}"
-      watched:
+                
+    watched:
         manual: yes  # You probably don't need to run this all the time, so you can launch it explicitly with the --tasks flag
         trakt_emit:
             username: daweasel27
