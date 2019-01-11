@@ -1,90 +1,74 @@
 ﻿variables: secrets.yml
-##### schedules
-#
 schedules:
-    - tasks: ["get-series-nextep"]
+    ##### YOUR TORRENT CLIENT SHOULD RUN THIS COMMAND AFTER EVERY DOWNLOAD: PATH_TO_flexget/bin/flexget execute --tasks find-* move-*
+    ##### Alternatively uncomment this task to process downloaded files every 30min.
+    #  - tasks: [ 'find-*', 'move-*']
+    #    interval:
+    #      minutes: 30
+    ##### Every day at 2AM, check nextep to search (necessary if you added a new show to the list but have already watched it partly) and find subtitles attempt #2 (without original name).
+    - tasks: ["*-nextep", get-subtitles]
+      schedule:
+          hour: 2
+    ##### Twice a day between 2AM and 7AM: scan existing files, fill queue, check the feeds for latest episodes, discover missing episodes.
+    - tasks:
+          ["purge-*", "populate-*", "fill-*", "*-manual", "*-rss", "*-discover"]
+      schedule:
+          hour: "2-7/2"
+    ##### Weekly cleanup of Transmission, Trakt TVshows list (fully watched && ended = delete from list) and harddrive.
+    - tasks: ["clean-*"]
       interval:
-          minutes: 30
-    - tasks: ["populate-*", "clean-*", "update-*"]
-      interval:
-          minutes: 30
-    - tasks: ["fill-*", "*-rss"]
-      schedule:
-          hour: 00-12
-          minute: "*/30"
-    - tasks: ["*-discover", "*-manual"]
-      schedule:
-          hour: 00-12/2
-    - tasks: ["move-*", download-subtitles]
-      schedule:
-          hour: 00-12
-          minute: 15,45
-    - tasks: [subtitle-series]
-      schedule:
-          day_of_week: mon
-          hour: 14
-    - tasks: [subtitle-movies]
-      schedule:
-          day_of_week: fri
-          hour: 14
-    - tasks: [get-subtitles]
-      schedule:
-          day: 1
-          hour: 15
-    - tasks: [duplicate-movies]
-      schedule:
-          day: 1
-          hour: 15
+          weeks: 1
 
 templates:
-    ##### Series config
-    #
+    ##### Series config# Please uncomment `tracking: backfill` if you need Flexget to download as much as old episodes as it can find. Do the same in series-discover-episodes and series-discover-seasons tasks
     series:
         thetvdb_lookup: yes
         tvmaze_lookup: yes
-        require_field: series_name
         configure_series:
             from:
                 entry_list: trakt-series
             settings:
                 identified_by: ep
-                timeframe: 16 hours
-                target: 1080p+ !10bit
-                quality: 1080p+ !10bit
-                propers: 16 hours
+                timeframe: 1 hours
+                target: 1080p+ h264+
+                quality: 1080p+ h264+
+                propers: 48 hours
                 specials: no
+                season_packs: 3
+        #        tracking: backfill
         content_size:
             min: 100
-            max: 1500
+        content_filter:
+            require:
+                - "*.mkv"
+                - "*.mp4"
 
-    ##### Movies config
-    #
-    movies-1080p:
+    ##### Movies config#
+    movies-HQ:
         tmdb_lookup: yes
         movie_list: trakt-movies
-        quality: 1080p tvrip+ !h265 !10bit !dts
+        quality: 1080p webdl+
+        content_size:
+            min: 8000
+            max: 25000
+
+    movies-NQ:
+        tmdb_lookup: yes
+        movie_list: trakt-movies
+        quality: 1080p webdl+
+        content_size:
+            min: 2000
+            max: 7999
+
+    movies-LQ:
+        tmdb_lookup: yes
+        movie_list: trakt-movies
+        quality: 720p webdl+
         content_size:
             min: 900
             max: 8000
 
-    movies-720p:
-        tmdb_lookup: yes
-        movie_list: trakt-movies
-        quality: 720p+ hdrip+ !10bit !cam !dts
-        content_size:
-            min: 500
-            max: 5000
-
-    movies-sd:
-        tmdb_lookup: yes
-        movie_list: trakt-movies
-        quality: sdtv+ <720p !10bit !cam !dts
-        content_size:
-            min: 200
-            max: 2000
-
-    ##### Transmission config
-    #
+    ##### Transmission config#
     transmission-anchors:
         _transmission-settings: &transmission-settings
             host: "{? transmission.host ?}"
@@ -92,8 +76,7 @@ templates:
             username: "{? transmission.user ?}"
             password: "{? transmission.pass ?}"
 
-    ##### Common rejections
-    #
+    ##### Common rejections#
     reject:
         regexp:
             reject:
@@ -107,15 +90,15 @@ templates:
                 - \bger(man)?\b
                 - \bcastellano\b
                 - \brus(sian)?\b
+                - \btamil\b
+                - \bhindi\b
         content_filter:
             reject:
                 - "*.rar"
                 - "*.zip"
 
     ##### ADVANCED SETTINGS #####
-
-    ##### Global config
-    #
+    ##### Global config#
     global:
         no_entries_ok: yes
         pathscrub: windows
@@ -153,8 +136,7 @@ templates:
             utils.requests:
                 - Waiting
 
-    ##### Common torrents config
-    #
+    ##### Common torrents config#
     torrents:
         torrent_alive:
             min_seeds: 3
@@ -162,75 +144,99 @@ templates:
         magnets: no
         # Might need to disable if you are getting errors connecting to https sources
         # Can remove if you upgrade to python 2.7.9+ or install requests[security]
-        #verify_ssl_certificates: no
+        verify_ssl_certificates: no
         domain_delay:
-            thepiratebay.org: 10 seconds
             thepiratebay.se: 10 seconds
-            nyaa.se: 3 seconds
+            thepiratebay.org: 10 seconds
             limetorrents: 3 seconds
-            rarbg: 3 seconds
-            1337x: 3 seconds
+            anidex.info: 3 seconds
+            bt-chat.com: 1 seconds
+            ezrss.it: 1 seconds
+            showrss.info: 2 seconds
+            torlock.eu: 1 seconds
+            torrenticity.com: 1 seconds
+            zooqle.com: 2 seconds
+        urlrewrite:
+            torrentz2:
+                regexp: 'http://torrentz2.eu/(?P<id>\w*)'
+                format: 'magnet:?xt=urn:btih:\g<id>&dn=&tr=udp%3A%2F%2Ftracker.openbittorrent.com%3A80&tr=udp%3A%2F%2Fopen.demonii.com%3A1337%2Fannounce&tr=udp%3A%2F%2Ftracker.leechers-paradise.org%3A6969%2Fannounce&tr=udp%3A%2F%2Ftracker.coppersurfer.tk%3A6969%2Fannounce'
 
-    ##### Transmission series config
-    #
+    ##### Transmission series config#
     transmission-series:
         transmission:
             <<: *transmission-settings
             main_file_only: yes
             include_subs: yes
             rename_like_files: yes
-            content_filename: "{{tvdb_series_name|default(series_name)|pathscrub}} - {{tvdb_ep_id|default(series_id)}}{% if tvdb_ep_name|default(False) %} - {{tvdb_ep_name|pathscrub}}{% endif %}{% if quality|default(False) %} - [{{quality}}]{% endif %}"
+            content_filename: "{{tvdb_series_name|escape|replace('&#39;', '')|pathscrub}} - {{series_id}}{% if tvdb_ep_name|default(False) %} - {{tvdb_ep_name|pathscrub}}{% endif %}{% if quality|default(False) %} - [{{quality}}]{% endif %}"
             path: "/{? folder.root ?}{? folder.downseries ?}{{tvdb_series_name|default(series_name)|pathscrub}}/"
 
-    ##### Transmission movies config
-    #
+    ##### Transmission movies config#
     transmission-movies:
         transmission:
             <<: *transmission-settings
             main_file_only: yes
             include_subs: yes
             rename_like_files: yes
-            content_filename: "{{tmdb_name|pathscrub}} ({{tmdb_year}}){% if quality|default(False) %} - [{{quality}}]{% endif %}"
-            path: "/{? folder.root ?}{? folder.downmovies ?}{{movie_name|pathscrub}}/"
+            content_filename: "{{tmdb_name|pathscrub}} ({{tmdb_year}}){% if quality|default(False) %} - [{{quality}}]{% endif %}{% if release_group|default(False) %} - [{{release_group}}]{% endif %}"
+            path: "/{? folder.root ?}{? folder.downmovies ?}{{movie_name|pathscrub}}"
 
-    ##### Pushbullet config
-    #
-    pushbullet:
-        notify:
-            entries:
-                title: "[flexget] {{task}}"
-                message: "{{title}}"
-                via:
-                    - pushbullet:
-                          api_key: "{? pushbullet.api ?}"
+    ##### Pushbullet config#
+    #  pushbullet:
+    #    notify:
+    #      entries:
+    #        title: "[flexget] {{task}}"
+    #        message: "{{title}}"
+    #        via:
+    #          - pushbullet:
+    #              api_key: "{? pushbullet.api ?}"
 
-    ##### Disable builtins for some tasks
-    #
+    ##### Disable builtins for some tasks#
     disable-seen-retry:
         disable:
             - seen
             - seen_info_hash
             - retry_failed
 
-    ##### Series metainfo mainly for move and update tasks
-    #
+    ##### Series metainfo mainly for move and update tasks#
     series-metainfo:
         metainfo_series: yes
         thetvdb_lookup: yes
-        require_field: series_name
 
-    ##### Guessit parsing for some series tasks and anime, not applied to all tasks because it causes issues with "name (year)" based series, like scandal
-    #
+    ##### Guessit parsing for some series tasks, not applied to all tasks because it causes issues with "name (year)" based series, like scandal#
     series-guessit:
         parsing:
             series: guessit
 
-    ##### Movies metainfo mainly for move and update tasks
-    #
+    ##### Movies metainfo mainly for move and update tasks#
     movies-metainfo:
         tmdb_lookup: yes
         parsing:
             movie: guessit
+        metainfo_movie: yes
+
+##### Move template, only necessary if you rename files AFTER they are downloaded.
+#  move-series:
+#    move:
+#      to: "/{? folder.root ?}{? folder.series ?}{{tvdb_series_name|escape|replace('&#39;', '')|pathscrub}}/S{{series_season|pad(2)}}/"
+#      rename: "{{tvdb_series_name|default(series_name)}} - {{tvdb_ep_id|default(series_id)}}{% if tvdb_ep_name|default(False) %} - {{tvdb_ep_name|pathscrub}}{% endif %}{% if quality|default(False) %} - [{{quality}}]{% endif %}"
+#      along:
+#        extensions:
+#          - srt
+#          - sub
+#        subdirs:
+#          - Subs
+#      clean_source: 50
+#    kodi_library:
+#      action: scan
+#      category: video
+#      url: http://localhost
+#      port: 8080
+#    list_add:
+#      - subtitle_list:
+#          list: subtitles
+#          path: "{{location}}"
+#          remove_after: 7 days
 
 tasks:
     ########## SERIES ##########
@@ -243,7 +249,7 @@ tasks:
             - series-metainfo
         list_clear:
             what:
-                - entry_list: trakt-series
+                - entry_list: trakt-series-begin
         next_trakt_episodes:
             account: "{? trakt.account ?}"
             list: "{? trakt.series ?}"
@@ -251,11 +257,23 @@ tasks:
             position: next
         accept_all: yes
         list_add:
-            - entry_list: trakt-series
-    ##### Populates the series database with the files on the library, to avoid duplicate downloads
-    #
+            - entry_list: trakt-series-begin
+
+    set-series-nextep:
+        priority: 3
+        template:
+            - disable-seen-retry
+            - series-metainfo
+        entry_list: trakt-series-begin
+        accept_all: yes
+        set:
+            series_name: "{{tvdb_series_name|escape|replace('&#39;', '')}}"
+        set_series_begin: yes
+
+    # SCAN DATABASE
+    ##### Populates the series database with the files on the library, to avoid duplicate downloads#
     populate-series-db:
-        priority: 1
+        priority: 4
         template:
             - series-metainfo
         seen: local
@@ -272,11 +290,11 @@ tasks:
                     retrieve: dirs
             settings:
                 tracking: no
+                identified_by: ep
 
-    ##### Fetch, format and output trakt series list to a custom entry list
-    #
+    ##### Fetch, format and output trakt series list to a custom entry list#
     fill-series-list:
-        priority: 2
+        priority: 5
         template:
             - disable-seen-retry
             - series-metainfo
@@ -293,61 +311,61 @@ tasks:
         list_add:
             - entry_list: trakt-series
 
-    ##### Download episodes from manually downloaded torrents
-    #
+    # GET SERIES
+    ##### Download episodes from manually downloaded torrents#
     download-series-manual:
-        priority: 4
-        manual: yes
+        priority: 6
         template:
             - disable-seen-retry
             - series-metainfo
+            - series-guessit
             - transmission-series
-            - pushbullet
         filesystem:
             path: "/{? folder.root ?}{? folder.downseries ?}"
             mask: "*.torrent"
-        parsing:
-            series: guessit
         accept_all: yes
         exec:
             on_output:
                 for_accepted: rm -f "{{location}}"
 
-    ##### Download episodes from RSS feeds
-    #
+    ##### Download episodes from RSS feeds#
     download-series-rss:
-        priority: 5
+        priority: 7
         template:
             - series
             - reject
             - torrents
             - transmission-series
-            - pushbullet
         inputs:
-            - rss: https://extratorrent.cc/rss.xml?cid=8&type=new
+            - rss: http://showrss.info/user/1450.rss?magnets=true&namespaces=true&name=null&quality=anyhd&re=yes
             - rss: https://eztv.ag/ezrss.xml
+            - rss: https://rarbg.to/rssdd.php?category=1;18;41;49
+            - rss:
+                  url: https://zooqle.com/search?q=%2A+category%3ATV&fmt=rss
+                  title: "torrent:fileName"
             - rss: https://www.limetorrents.cc/rss/20/
 
-    ##### Discover and download older episodes and pilots from recently added series
-    #
-    download-series-discover:
+    ##### Discover and download season packs# Please uncomment `backfill` if you need Flexget to download as much as old episodes as it can find. Do the same in series-discover-seasons task and series template.
+    download-seasons-discover:
         priority: 8
         template:
             - series
             - reject
             - torrents
             - transmission-series
-            - pushbullet
+            - series-metainfo
+        #season lookup not supported by thetvdb
+        thetvdb_lookup: no
         magnets: yes
         convert_magnet:
-            timeout: 10 seconds
+            timeout: 180 seconds
             force: yes
         discover:
             release_estimations: strict
             interval: 15 minutes
             what:
-                - next_series_episodes:
-                      backfill: yes
+                - next_series_seasons: yes
+            #            backfill: yes
             from:
                 - piratebay:
                       category: highres tv
@@ -355,12 +373,41 @@ tasks:
                       category: tv
                 - rarbg:
                       category: [1, 18, 41, 49]
-                - 1337x: yes
+                - search_rss: https://torrentz2.eu/feed?f=\{{search_term}}
 
-    ##### Remove manually movies downloaded from the movie queue and trakt list
-    #
-    clean-movies-queue:
-        priority: 31
+    ##### Discover and download older episodes# Please uncomment `tracking: backfill` if you need Flexget to download as much as old episodes as it can find. Do the same in series-discover-seasons task and series template.
+    download-series-discover:
+        priority: 9
+        template:
+            - series
+            - reject
+            - torrents
+            - transmission-series
+            - series-metainfo
+        magnets: yes
+        convert_magnet:
+            timeout: 180 seconds
+            force: yes
+        discover:
+            release_estimations: strict
+            interval: 15 minutes
+            what:
+                - next_series_episodes: yes
+            #            backfill: yes
+            from:
+                - piratebay:
+                      category: highres tv
+                - limetorrents:
+                      category: tv
+                - rarbg:
+                      category: [1, 18, 41, 49]
+                - search_rss: https://torrentz2.eu/feed?f=\{{search_term}}
+
+    ########## MOVIES ##########
+
+    ##### Remove manually downloaded movies from the movie queue and trakt list#
+    purge-movies-queue:
+        priority: 11
         template:
             - disable-seen-retry
             - movies-metainfo
@@ -377,42 +424,25 @@ tasks:
                   list: "{? trakt.movies ?}"
                   type: movies
 
-    ##### Fill the movie queue with movies from trakt list
-    #
-    fill-movie-queue:
-        priority: 32
+    ##### Fill the movie queue with movies from trakt list#
+    fill-movies-queue:
+        priority: 12
         trakt_list:
             account: "{? trakt.account ?}"
             list: "{? trakt.movies ?}"
             type: movies
             strip_dates: yes
-        #rss: http://rss.imdb.com/user/ur15183663/watchlist aninhas antida
-        #rss: http://rss.imdb.com/list/ls003928446/ best off internet
-        inputs:
-            - rss: http://rss.imdb.com/list/ls056319538/ #lista best of aninhas
-            - rss: http://rss.imdb.com/user/ur19926615/watchlist #aninhas watchlist
         accept_all: yes
         list_add:
             - movie_list: trakt-movies
 
-    fill-rss-movie-queue:
-        priority: 33
-        inputs:
-            - rss: http://rss.imdb.com/list/ls056319538/ #lista best of aninhas
-            - rss: http://rss.imdb.com/user/ur19926615/watchlist #aninhas watchlist
-        accept_all: yes
-        list_add:
-            - movie_list: imdb-movies
-
-    ##### Download movies manually downloaded torrents
-    #
+    ##### Download movies manually downloaded torrents#
     download-movies-manual:
-        priority: 34
+        priority: 13
         template:
             - disable-seen-retry
             - movies-metainfo
             - transmission-movies
-            - pushbullet
         filesystem:
             path: "/{? folder.root ?}{? folder.downmovies ?}"
             mask: "*.torrent"
@@ -427,96 +457,172 @@ tasks:
                   list: "{? trakt.movies ?}"
                   type: movies
 
-    ##### Download 1080p movies
-    #
-    download-movies-1080p-discover:
-        priority: 37
+    ##### Discover and download 1080p movies with good bitrate (min. 8GB)#
+    download-movies-HQ-discover:
+        priority: 14
         template:
-            - movies-1080p
+            - movies-HQ
             - reject
             - torrents
             - transmission-movies
-            - pushbullet
         exists_movie:
             - "/{? folder.root ?}{? folder.downmovies ?}"
             - "/{? folder.root ?}{? folder.movies ?}"
         magnets: yes
         convert_magnet:
-            timeout: 10 seconds
+            timeout: 180 seconds
             force: yes
+        seen: local
         discover:
             release_estimations: loose
             interval: 15 minutes
             what:
                 - movie_list: trakt-movies
-                #- movie_list: from-imdb
-            from:
-                - piratebay:
-                      category: movies
-                - limetorrents:
-                      category: movies
-                - rarbg:
-                      category: [1, 18, 41, 49]
-                - 1337x: yes
-        list_match:
-            from:
-                - movie_list: trakt-movies
-                #- movie_list: from-imdb
-        list_remove:
-            - trakt_list:
-                  account: "{? trakt.account ?}"
-                  list: "{? trakt.movies ?}"
-                  type: movies
-
-    ##### Download 720p movies if the movie is not recent
-    #
-    download-movies-720p-discover:
-        priority: 38
-        template:
-            - movies-720p
-            - reject
-            - torrents
-            - transmission-movies
-            - pushbullet
-        exists_movie:
-            - "/{? folder.root ?}{? folder.downmovies ?}"
-            - "/{? folder.root ?}{? folder.movies ?}"
-        magnets: yes
-        convert_magnet:
-            timeout: 10 seconds
-            force: yes
-        discover:
-            release_estimations: loose
-            interval: 15 minutes
-            what:
-                - movie_list: trakt-movies
-                #- movie_list: from-imdb
             from:
                 - piratebay:
                       category: highres movies
                 - limetorrents:
                       category: movies
-                - 1337x: yes
-        if:
-            - tmdb_year > now.year - 1: reject
         list_match:
             from:
                 - movie_list: trakt-movies
-            #- movie_list: from-imdb
         list_remove:
             - trakt_list:
                   account: "{? trakt.account ?}"
                   list: "{? trakt.movies ?}"
                   type: movies
 
-    ##### Move series from downloads folder to respective folders, along with existing subtitles and adding the files to the subtitle queue
-    #
+    ##### Discover and download NQ movies (fullHD min 2GB), if the movie is not recent#
+    download-movies-NQ-discover:
+        priority: 15
+        template:
+            - movies-NQ
+            - reject
+            - torrents
+            - transmission-movies
+        exists_movie:
+            - "/{? folder.root ?}{? folder.downmovies ?}"
+            - "/{? folder.root ?}{? folder.movies ?}"
+        magnets: yes
+        convert_magnet:
+            timeout: 180 seconds
+            force: yes
+        seen: local
+        discover:
+            release_estimations: loose
+            interval: 15 minutes
+            what:
+                - movie_list: trakt-movies
+            from:
+                - piratebay:
+                      category: highres movies
+                - limetorrents:
+                      category: movies
+        list_match:
+            from:
+                - movie_list: trakt-movies
+        list_remove:
+            - trakt_list:
+                  account: "{? trakt.account ?}"
+                  list: "{? trakt.movies ?}"
+                  type: movies
+
+    ##### Discover and download lower quality/bitrate movies (1-8GB 720p), if the movie is not recent#
+    download-movies-LQ-discover:
+        priority: 16
+        template:
+            - movies-LQ
+            - reject
+            - torrents
+            - transmission-movies
+        exists_movie:
+            - "/{? folder.root ?}{? folder.downmovies ?}"
+            - "/{? folder.root ?}{? folder.movies ?}"
+        magnets: yes
+        convert_magnet:
+            timeout: 180 seconds
+            force: yes
+        seen: local
+        discover:
+            release_estimations: loose
+            interval: 15 minutes
+            what:
+                - movie_list: trakt-movies
+            from:
+                - piratebay:
+                      category: highres movies
+                - limetorrents:
+                      category: movies
+        list_match:
+            from:
+                - movie_list: trakt-movies
+        list_remove:
+            - trakt_list:
+                  account: "{? trakt.account ?}"
+                  list: "{? trakt.movies ?}"
+                  type: movies
+
+    ########## SUBTITLES (attempt 1/2) ##########
+
+    ##### The first attempt to find subtitles by searching for a match before renaming files.
+    find-subtitles-series:
+        priority: 21
+        template:
+            - disable-seen-retry
+        filesystem:
+            path: "/{? folder.root ?}{? folder.downseries ?}"
+            recursive: yes
+            retrieve: files
+            regexp: '.*\.(avi|mkv|mp4)$'
+        accept_all: yes
+        seen: local
+        subliminal:
+            languages:
+                - eng
+            exact_match: yes
+            single: no
+            providers: [opensubtitles, addic7ed, tvsubtitles, podnapisi]
+            authentication:
+                opensubtitles:
+                    username: "{? subtitles.user ?}"
+                    password: "{? subtitles.pass ?}"
+                addic7ed:
+                    username: "{? subtitles.user ?}"
+                    password: "{? subtitles.pass ?}"
+
+    ##### The first attempt to find subtitles by searching for a match before renaming files.
+    find-subtitles-movies:
+        priority: 22
+        template:
+            - disable-seen-retry
+        filesystem:
+            path: "/{? folder.root ?}{? folder.downmovies ?}"
+            recursive: yes
+            retrieve: files
+            regexp: '.*\.(avi|mkv|mp4)$'
+        accept_all: yes
+        seen: local
+        subliminal:
+            languages:
+                - eng
+            exact_match: yes
+            single: no
+            providers: [opensubtitles, addic7ed, tvsubtitles, podnapisi]
+            authentication:
+                opensubtitles:
+                    username: "{? subtitles.user ?}"
+                    password: "{? subtitles.pass ?}"
+                addic7ed:
+                    username: "{? subtitles.user ?}"
+                    password: "{? subtitles.pass ?}"
+
+    ##########      LIBRARY     ##########
     move-series:
-        priority: 41
+        priority: 31
         template:
             - disable-seen-retry
             - series-metainfo
-            - pushbullet
+            - series-guessit
         filesystem:
             path: "/{? folder.root ?}{? folder.downseries ?}"
             recursive: yes
@@ -524,21 +630,20 @@ tasks:
             regexp: '.*\.(avi|mkv|mp4)$'
         accept_all: yes
         move:
-            to: "/{? folder.root ?}{? folder.series ?}{{tvdb_series_name|escape|replace('&#39;', '')|pathscrub}}/Season {{ series_season|pad(2)}}/"
-            rename: "{{tvdb_series_name|escape|replace('&#39;', '')|pathscrub}} - {{tvdb_ep_id|default(series_id)}}{% if tvdb_ep_name|default(False) %} - {{tvdb_ep_name|pathscrub}}{% endif %}{% if quality|default(False) %} - [{{quality}}]{% endif %}"
+            to: "/{? folder.root ?}{? folder.series ?}{{tvdb_series_name|escape|replace('&#39;', '')|pathscrub}}/S{{series_season|pad(2)}}/"
+            rename: "{{tvdb_series_name|escape|replace('&#39;', '')|pathscrub}} - {{series_id}}{% if tvdb_ep_name|default(False) %} - {{tvdb_ep_name|pathscrub}}{% endif %}{% if quality|default(False) %} - [{{quality}}]{% endif %}"
             along:
                 extensions:
                     - srt
                     - sub
-                    - en.srt
-                    - en.sub
-                    - pt.sub
-                    - pt.srt
-                    - es.sub
-                    - es.srt
-                    - fr.sub
-                    - fr.srt
+                subdirs:
+                    - Subs
             clean_source: 50
+        kodi_library:
+            action: scan
+            category: video
+            url: "{? kodi.host ?}"
+            port: 8080
         list_add:
             - subtitle_list:
                   list: subtitles
@@ -548,14 +653,87 @@ tasks:
             on_exit:
                 phase: find "/{? folder.root ?}{? folder.downseries ?}"* -type d -empty -delete
 
-    ##### Move movies from downloads folder to the movies folder, along with possible subtitles and adding the files to the subtitle queue
-    #
+    ##### First add the downloaded series a list, this allows us to solve issues with files that have incorrect filenames.
+    #  move-series-list:
+    #    priority: 32
+    #    template:
+    #      - disable-seen-retry
+    #      - series-metainfo
+    #    list_clear:
+    #      what:
+    #        - entry_list: downloaded-series
+    #    filesystem:
+    #      path: "/{? folder.root ?}{? folder.downseries ?}"
+    #      recursive: yes
+    #      retrieve: files
+    #      regexp: '.*\.(avi|mkv|mp4)$'
+    #    accept_all: yes
+    #    list_add:
+    #      - entry_list: downloaded-series
+
+    ##### Now move series from downloads folder to respective folders, along with existing subtitles and adding the files to the subtitle queue
+    #  move-series-SxxEyy:
+    #    priority: 33
+    #    template:
+    #      - disable-seen-retry
+    #      - series-metainfo
+    #      - move-series
+    #    entry_list: downloaded-series
+    #    accept_all: yes
+    #    require_field: tvdb_series_name
+    #    exec:
+    #      on_exit:
+    #        phase: find "/{? folder.root ?}{? folder.downseries ?}"* -type d -empty -delete
+
+    ##### Fix the leftovers: Move series with incoreect epid numbering were rejected by the move-series task due to incorrect filename (SSEE instead of SxxEyy).
+    #  move-series-SSEE:
+    #    priority: 34
+    #    template:
+    #      - disable-seen-retry
+    #      - series-metainfo
+    #      - move-series
+    #    entry_list: downloaded-series
+    #    accept_all: yes
+    #    manipulate:
+    #      - title:
+    #          replace:
+    #            regexp: '([01]\d)([0-2]\d)'
+    #            format: 'S\1E\2'
+    #      - filename:
+    #          from: title
+    #    require_field: tvdb_series_name
+    #    exec:
+    #      on_exit:
+    #        phase: find "/{? folder.root ?}{? folder.downseries ?}"* -type d -empty -delete
+
+    ##### Fix the leftovers: downloaded series that were rejected by the move-series task due to incorrect filename (SEE instead of SxxEyy), will get a title fix and should get moved on next run.
+    #  move-series-SEE:
+    #    priority: 35
+    #    template:
+    #      - disable-seen-retry
+    #      - series-metainfo
+    #      - move-series
+    #    entry_list: downloaded-series
+    #    accept_all: yes
+    #    manipulate:
+    #      - title:
+    #          replace:
+    #            regexp: '([1-9])([0-2]\d)'
+    #            format: 'S\1E\2'
+    #      - filename:
+    #          from: title
+    #    require_field: tvdb_series_name
+    #    exec:
+    #      on_exit:
+    #        phase: find "/{? folder.root ?}{? folder.downseries ?}"* -type d -empty -delete
+
+    ##### Move movies from downloads folder to the movies folder, along with possible subtitles and adding the files to the subtitle queue#
     move-movies:
-        priority: 42
+        priority: 36
         template:
             - disable-seen-retry
             - movies-metainfo
-            - pushbullet
+        require_field: tmdb_name
         filesystem:
             path: "/{? folder.root ?}{? folder.downmovies ?}"
             recursive: yes
@@ -567,23 +745,20 @@ tasks:
                 - \btrailer\b
                 - \bsample\b
         move:
-            to: "/{? folder.root ?}{? folder.movies ?}/{{tmdb_name}} {{tmdb_year}}"
-            rename: "{{tmdb_name|pathscrub}} ({{tmdb_year}}){% if quality|default(False) %} - [{{quality}}]{% endif %}"
+            to: "/{? folder.root ?}{? folder.movies ?}"
+            rename: "{{tmdb_name|pathscrub}} ({{tmdb_year}}){% if quality|default(False) %} - [{{quality}}]{% endif %}{% if release_group|default(False) %} - [{{release_group}}]{% endif %}"
             along:
                 extensions:
                     - srt
                     - sub
-                    - en.srt
-                    - en.sub
-                    - pt.sub
-                    - pt.srt
-                    - es.sub
-                    - es.srt
-                    - fr.sub
-                    - fr.srt
                 subdirs:
                     - Subs
             clean_source: 100
+        kodi_library:
+            action: scan
+            category: video
+            url: "{? kodi.host ?}"
+            port: 8080
         list_add:
             - subtitle_list:
                   list: subtitles
@@ -593,224 +768,82 @@ tasks:
             on_exit:
                 phase: find "/{? folder.root ?}{? folder.downmovies ?}"* -type d -empty -delete
 
-    ##### Download subtitles for the previously queued files
-    #
-    download-subtitles:
-        priority: 45
+    ########## SUBTITLES (attempt 2/2) ##########
+
+    ##### Download subtitles for the previously queued files#
+    get-subtitles:
+        priority: 40
         template:
             - disable-seen-retry
-            - pushbullet
         subtitle_list:
             list: subtitles
+            recursion_depth: 3
         list_match:
             from:
                 - subtitle_list:
                       list: subtitles
         subliminal:
-            exact_match: yes
-            single: no
             languages:
                 - eng
-                - pt
-                - por
-                - br
-                - bra
-
-    ###download subtitles for series
-    subtitle-series:
-        priority: 70
-        filesystem:
-            path: "/{? folder.root ?}{? folder.series ?}"
-            regexp: '.*\.(avi|mkv|mp4)$'
-            recursive: yes
-        accept_all: yes
-        subliminal:
-            languages:
-                - por
-            alternatives:
-                - en
-                - eng
-                - es
-                - spa
-                - fr
-                - fra
             exact_match: yes
             single: no
-            providers:
-                - opensubtitles
-                - addic7ed
-                - podnapisi
-                - thesubdb
-                - tvsubtitles
+            providers: [opensubtitles, addic7ed, tvsubtitles, podnapisi]
             authentication:
-                addic7ed:
-                    username: "{? addicted.user ?}"
-                    password: "{? addicted.pass ?}"
                 opensubtitles:
-                    username: "{? opensubtitles.user ?}"
-                    password: "{? opensubtitles.pass ?}"
-                legendastv:
-                    username: "{? legendastv.user ?}"
-                    password: "{? legendastv.pass ?}"
-                podnapisi:
-                    username: "{? podnapisi.user ?}"
-                    password: "{? podnapisi.pass ?}"
-
-    ###download subtitles for movies
-    subtitle-movies:
-        priority: 71
-        filesystem:
-            path: "/{? folder.root ?}{? folder.movies ?}"
-            regexp: '.*\.(avi|mkv|mp4)$'
-            recursive: yes
-        accept_all: yes
-        subliminal:
-            languages:
-                - por
-            alternatives:
-                - en
-                - eng
-                - es
-                - spa
-                - fr
-                - fra
-            exact_match: yes
-            single: no
-            providers:
-                - opensubtitles
-                - addic7ed
-                - podnapisi
-                - thesubdb
-            authentication:
+                    username: "{? subtitles.user ?}"
+                    password: "{? subtitles.pass ?}"
                 addic7ed:
-                    username: "{? addicted.user ?}"
-                    password: "{? addicted.pass ?}"
-                opensubtitles:
-                    username: "{? opensubtitles.user ?}"
-                    password: "{? opensubtitles.pass ?}"
-                legendastv:
-                    username: "{? legendastv.user ?}"
-                    password: "{? legendastv.pass ?}"
-                podnapisi:
-                    username: "{? podnapisi.user ?}"
-                    password: "{? podnapisi.pass ?}"
+                    username: "{? subtitles.user ?}"
+                    password: "{? subtitles.pass ?}"
 
-    ###download subtitles for all files
-    get-subtitles:
-        priority: 72
-        disable:
-            - seen
-            - retry_failed
-        filesystem:
-            path:
-                - "/{? folder.root ?}{? folder.movies ?}"
-                - "/{? folder.root ?}{? folder.series ?}"
-            regexp: '.*\.(avi|mkv|mp4)$'
-            recursive: yes
-        accept_all: yes
-        subliminal:
-            languages:
-                - por
-            alternatives:
-                - eng
-            exact_match: yes
-            providers:
-                - opensubtitles
-                - addic7ed
-                - podnapisi
-                - thesubdb
-                - tvsubtitles
-            single: no
-            hearing_impaired: yes
-            authentication:
-                addic7ed:
-                    username: "{? addicted.user ?}"
-                    password: "{? addicted.pass ?}"
-                opensubtitles:
-                    username: "{? opensubtitles.user ?}"
-                    password: "{? opensubtitles.pass ?}"
-                legendastv:
-                    username: "{? legendastv.user ?}"
-                    password: "{? legendastv.pass ?}"
-                podnapisi:
-                    username: "{? podnapisi.user ?}"
-                    password: "{? podnapisi.pass ?}"
+    ########## CLEANUP ##########
 
-    ##### Clean finished torrents from transmission
-    #
     clean-transmission:
-        priority: 47
+        priority: 51
         disable: details
         clean_transmission:
             <<: *transmission-settings
-            finished_for: 1 hour
-            preserve_tracker: Btnext|Scene-rush
+            finished_for: 1 day
 
-    ##### Update trakt series list from local series folders, excluding the ones that already ended
-    #
-    update-series-list:
-        priority: 51
-        template:
-            - disable-seen-retry
-            - series-metainfo
-        filesystem:
-            path: "/{? folder.root ?}{? folder.series ?}"
-            retrieve: dirs
-        manipulate:
-            - title:
-                  replace:
-                      regexp: "$"
-                      format: " S01E01"
-        accept_all: yes
-        if:
-            - tvdb_status == 'Ended': reject
-        list_add:
-            - trakt_list:
-                  account: "{? trakt.account ?}"
-                  list: "{? trakt.series ?}"
-                  type: shows
-
-    ##### Clean the series that already ended from trakt series list
-    #
+    ##### Remove ended or canceled series that have been watched from trakt list#
     clean-series-list:
-        priority: 53
-        delay: 8 day
+        priority: 52
         template:
             - disable-seen-retry
             - series-metainfo
-            - pushbullet
+        trakt_lookup:
+            account: "{? trakt.account ?}"
+            username: "{? trakt.account ?}"
         trakt_list:
             account: "{? trakt.account ?}"
             list: "{? trakt.series ?}"
             type: shows
         if:
-            - tvdb_status == 'Ended' and trakt_watched == 'True': accept
+            - "tvdb_status == 'Ended' and trakt_watched": accept
         list_remove:
             - trakt_list:
                   account: "{? trakt.account ?}"
                   list: "{? trakt.series ?}"
                   type: shows
 
-    ##### move duplicated movies
-    #
-    duplicate-movies:
-        priority: 50
-        manual: yes
-        seen: no
-        filesystem:
-            path: "/{? folder.root ?}{? folder.movies ?}"
-            retrieve: dirs
-        imdb_lookup: yes
-        duplicates:
-            field: imdb_id
-            action: accept
-        move:
-            to: "/{? folder.root ?}{? folder.repmovies ?}"
-            allow_dir: yes
-
-##### webui
-#
-web_server:
-    bind: 0.0.0.0
-    port: 3539
-    web_ui: yes
+    ##### Remove watched seasons from drive#
+    clean-old-seasons:
+        priority: 53
+        template:
+            - disable-seen-retry
+            - series-metainfo
+        entry_list: trakt-series-begin
+        accept_all: yes
+        if:
+            - series_season == 1 or series_episode == 1: reject
+            - series_season > 1:
+                  set:
+                      to_remove: "S{{(series_season-1)|pad(2)}}"
+        exec:
+            on_output:
+                for_accepted: find "/{? folder.root ?}{? folder.series ?}{{tvdb_series_name|escape|replace('&#39;', '')}}" -type d -name "{{to_remove}}" -exec rm -r '{}' \;
+        kodi_library:
+            action: clean
+            category: video
+            url: "{? kodi.host ?}"
+            port: 8080
