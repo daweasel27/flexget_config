@@ -320,6 +320,8 @@ tasks:
         convert_magnet:
             timeout: 10 seconds
             force: yes
+        trakt_lookup:
+            username: daweasel27
         if:
             - trakt_watched: reject
         discover:
