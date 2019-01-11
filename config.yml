@@ -2,6 +2,9 @@
 ##### schedules
 #
 schedules:
+    - tasks: ["get-series-nextep"]
+      interval:
+          minutes: 30
     - tasks: ["populate-*", "clean-*", "update-*"]
       interval:
           minutes: 30
