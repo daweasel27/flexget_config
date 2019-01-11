@@ -326,7 +326,7 @@ tasks:
         if:
             - trakt_watched: reject
         if:
-            - "trakt_collected or trakt_watched": reject
+            - "not trakt_ep_first_aired or trakt_ep_first_aired < now": reject
         discover:
             release_estimations: strict
             interval: 15 minutes
