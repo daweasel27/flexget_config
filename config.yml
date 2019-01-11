@@ -354,7 +354,7 @@ tasks:
             interval: 15 minutes
             what:
                 - next_series_episodes:
-                      from_start: yes
+                      backfill: yes
             from:
                 - piratebay:
                       category: highres tv
