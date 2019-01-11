@@ -235,15 +235,15 @@ templates:
 tasks:
     ########## SERIES ##########
     # SYNC WITH TRAKT
-    ##### First run only (use ~/flexget/bin/flexget execute --now) Sync Flexget database with watched status in Trakt#  
+    ##### First run only (use ~/flexget/bin/flexget execute --now) Sync Flexget database with watched status in Trakt#
     get-series-nextep:
         priority: 2
         template:
             - disable-seen-retry
             - series-metainfo
         list_clear:
-          what:
-              - entry_list: trakt-series
+            what:
+                - entry_list: trakt-series
         next_trakt_episodes:
             account: "{? trakt.account ?}"
             list: "{? trakt.series ?}"
@@ -342,13 +342,6 @@ tasks:
         convert_magnet:
             timeout: 10 seconds
             force: yes
-        trakt_lookup:
-            account: daweasel27
-            username: daweasel27
-        if:
-            - trakt_watched: reject
-        if:
-            - "not trakt_ep_first_aired or trakt_ep_first_aired < now": reject
         discover:
             release_estimations: strict
             interval: 15 minutes
