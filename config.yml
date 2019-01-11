@@ -243,7 +243,7 @@ tasks:
             - series-metainfo
         list_clear:
           what:
-              - entry_list: trakt-series-begin
+              - entry_list: trakt-series
         next_trakt_episodes:
             account: "{? trakt.account ?}"
             list: "{? trakt.series ?}"
@@ -251,7 +251,7 @@ tasks:
             position: next
         accept_all: yes
         list_add:
-            - entry_list: trakt-series-begin
+            - entry_list: trakt-series
     ##### Populates the series database with the files on the library, to avoid duplicate downloads
     #
     populate-series-db:
