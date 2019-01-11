@@ -620,9 +620,6 @@ tasks:
                 - podnapisi
                 - thesubdb
                 - tvsubtitles
-                - subscenter
-                - shooter
-                - legendastv
             authentication:
                 addic7ed:
                     username: "{? addicted.user ?}"
@@ -662,9 +659,6 @@ tasks:
                 - addic7ed
                 - podnapisi
                 - thesubdb
-                - tvsubtitles
-                - subscenter
-                - shooter
                 - legendastv
             authentication:
                 addic7ed:
@@ -705,9 +699,6 @@ tasks:
                 - podnapisi
                 - thesubdb
                 - tvsubtitles
-                - subscenter
-                - shooter
-                - legendastv
             single: no
             hearing_impaired: yes
             authentication:
