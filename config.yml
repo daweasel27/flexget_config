@@ -2,9 +2,6 @@
 ##### schedules
 #
 schedules:
-    - tasks: ["web_server"]
-      interval:
-          minutes: 30
     - tasks: ["populate-*", "clean-*", "update-*"]
       interval:
           minutes: 30
@@ -233,6 +230,25 @@ templates:
             movie: guessit
 
 tasks:
+    ########## SERIES ##########
+    # SYNC WITH TRAKT
+    ##### First run only (use ~/flexget/bin/flexget execute --now) Sync Flexget database with watched status in Trakt#  
+    get-series-nextep:
+        priority: 2
+        template:
+            - disable-seen-retry
+            - series-metainfo
+        list_clear:
+          what:
+              - entry_list: trakt-series-begin
+        next_trakt_episodes:
+            account: "{? trakt.account ?}"
+            list: "{? trakt.series ?}"
+            context: watched
+            position: next
+        accept_all: yes
+        list_add:
+            - entry_list: trakt-series-begin
     ##### Populates the series database with the files on the library, to avoid duplicate downloads
     #
     populate-series-db:
@@ -293,17 +309,7 @@ tasks:
         exec:
             on_output:
                 for_accepted: rm -f "{{location}}"
-                
-    watched:
-        manual: yes  # You probably don't need to run this all the time, so you can launch it explicitly with the --tasks flag
-        trakt_emit:
-            username: daweasel27
-            password: as8824672
-            list: Tvshows
-            context: watched  # You can set this to 'collected' depending on the state of your trakt info
-            position: next
-        accept_all: yes
-        set_series_begin: yes
+
     ##### Download episodes from RSS feeds
     #
     download-series-rss:
@@ -812,4 +818,3 @@ web_server:
     bind: 0.0.0.0
     port: 3539
     web_ui: yes
-
