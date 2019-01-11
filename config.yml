@@ -659,7 +659,6 @@ tasks:
                 - addic7ed
                 - podnapisi
                 - thesubdb
-                - legendastv
             authentication:
                 addic7ed:
                     username: "{? addicted.user ?}"
