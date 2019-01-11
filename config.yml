@@ -321,9 +321,12 @@ tasks:
             timeout: 10 seconds
             force: yes
         trakt_lookup:
+            account: daweasel27
             username: daweasel27
         if:
             - trakt_watched: reject
+        if:
+            - "trakt_collected or trakt_watched": reject
         discover:
             release_estimations: strict
             interval: 15 minutes

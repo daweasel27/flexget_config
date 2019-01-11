@@ -1,0 +1,78 @@
+series:
+  - "S.W.A.T. (2017)":
+      alternate_name:
+        - "S.W.A.T (2017)"
+        - "SWAT (2017)"
+        - "S W A T (2017)"
+        - "S W A T"
+        - "S W A T 2017"
+        - "SWAT"
+        - "SWAT 2017"
+        - "SWAT2017"
+        - "S.W.A.T. (2017)"
+  - "Marvel's Agents of S.H.I.E.L.D.":
+      name_regexp: ^marvel(')?s.agents.of.(s.h.i.e.l.d.?|shield)
+  - "Chicago P.D.":
+      alternate_name:
+        - "Chicago P.D"
+        - "Chicago P D"
+        - "Chicago PD"
+        - "Chicago P.D. (2014)"
+  - "Mr. Robot":
+      alternate_name:
+        - "Mr. Robot (2015)"
+        - "Mr Robot"
+        - "Mr  Robot"
+  - "CSI: Crime Scene Investigation (2000)":
+      alternate_name:
+        - "CSI: Las vegas"
+        - "CSI Las vegas"
+        - "CSI Crime Scene Investigation"
+        - "CSI: Crime Scene Investigation"
+  - "House of Cards (US)":
+      alternate_name:
+        - "House of Cards 2013"
+        - "House of Cards"
+        - "House of Cards (2013)"
+  - "Better Call Saul (2015)":
+      alternate_name:
+        - "Better Call Saul"
+  - "Marvel's Daredevil (2015)":
+      alternate_name:
+        - "Marvel's Daredevil"
+        - "Marvels Daredevil (2015)"
+        - "Marvels Daredevil"
+        - "Marvel s Daredevil"
+  - "24: Legacy (2017)":
+      alternate_name:
+        - "24: Legacy"
+  - "Supernatural":
+      alternate_name:
+        - "Supernatural (2013)"
+  - "Top Gear":
+      alternate_name:
+        - "Top Gear (2002)"
+  - "Hawaii Five-0":
+      alternate_name:
+        - "Hawaii Five 0"
+        - "Hawaii Five0"
+        - "Hawaii Five-0 (2010)"
+        - "Hawaii Five0 (2010)"
+        - "Hawaii Five 0 (2010)"
+        - "Hawaii Five 0 2010"
+  - "Strike Back":
+      alternate_name:
+        - "Strike Back (2010)"
+  - "Homeland":
+      alternate_name:
+        - "Homeland (2011) "
+  - "Money Heist":
+      alternate_name:
+        - "Money Heist (2017)"
+        - "La Casa De Papel"
+  - "The 100":
+      alternate_name:
+        - "The 100 (2014)"
+  - "Stranger Things":
+      alternate_name:
+        - "Stranger Things (2016)"
