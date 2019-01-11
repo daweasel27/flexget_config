@@ -182,14 +182,14 @@ templates:
             path: "/{? folder.root ?}{? folder.downmovies ?}{{movie_name|pathscrub}}"
 
     ##### Pushbullet config#
-    #  pushbullet:
-    #    notify:
-    #      entries:
-    #        title: "[flexget] {{task}}"
-    #        message: "{{title}}"
-    #        via:
-    #          - pushbullet:
-    #              api_key: "{? pushbullet.api ?}"
+      pushbullet:
+        notify:
+          entries:
+            title: "[flexget] {{task}}"
+            message: "{{title}}"
+            via:
+              - pushbullet:
+                  api_key: "{? pushbullet.api ?}"
 
     ##### Disable builtins for some tasks#
     disable-seen-retry:
@@ -320,6 +320,7 @@ tasks:
             - series-metainfo
             - series-guessit
             - transmission-series
+            - pushbullet
         filesystem:
             path: "/{? folder.root ?}{? folder.downseries ?}"
             mask: "*.torrent"
@@ -336,6 +337,7 @@ tasks:
             - reject
             - torrents
             - transmission-series
+            - pushbullet
         inputs:
             - rss: http://showrss.info/user/1450.rss?magnets=true&namespaces=true&name=null&quality=anyhd&re=yes
             - rss: https://eztv.ag/ezrss.xml
@@ -346,34 +348,34 @@ tasks:
             - rss: https://www.limetorrents.cc/rss/20/
 
     ##### Discover and download season packs# Please uncomment `backfill` if you need Flexget to download as much as old episodes as it can find. Do the same in series-discover-seasons task and series template.
-    download-seasons-discover:
-        priority: 8
-        template:
-            - series
-            - reject
-            - torrents
-            - transmission-series
-            - series-metainfo
-        #season lookup not supported by thetvdb
-        thetvdb_lookup: no
-        magnets: yes
-        convert_magnet:
-            timeout: 180 seconds
-            force: yes
-        discover:
-            release_estimations: strict
-            interval: 15 minutes
-            what:
-                - next_series_seasons: yes
-            #            backfill: yes
-            from:
-                - piratebay:
-                      category: highres tv
-                - limetorrents:
-                      category: tv
-                - rarbg:
-                      category: [1, 18, 41, 49]
-                - search_rss: https://torrentz2.eu/feed?f=\{{search_term}}
+    # download-seasons-discover:
+    #     priority: 8
+    #     template:
+    #         - series
+    #         - reject
+    #         - torrents
+    #         - transmission-series
+    #         - series-metainfo
+    #     #season lookup not supported by thetvdb
+    #     thetvdb_lookup: no
+    #     magnets: yes
+    #     convert_magnet:
+    #         timeout: 180 seconds
+    #         force: yes
+    #     discover:
+    #         release_estimations: strict
+    #         interval: 15 minutes
+    #         what:
+    #             - next_series_seasons: yes
+    #         #            backfill: yes
+    #         from:
+    #             - piratebay:
+    #                   category: highres tv
+    #             - limetorrents:
+    #                   category: tv
+    #             - rarbg:
+    #                   category: [1, 18, 41, 49]
+    #             - search_rss: https://torrentz2.eu/feed?f=\{{search_term}}
 
     ##### Discover and download older episodes# Please uncomment `tracking: backfill` if you need Flexget to download as much as old episodes as it can find. Do the same in series-discover-seasons task and series template.
     download-series-discover:
@@ -384,6 +386,7 @@ tasks:
             - torrents
             - transmission-series
             - series-metainfo
+            - pushbullet
         magnets: yes
         convert_magnet:
             timeout: 180 seconds
@@ -443,6 +446,7 @@ tasks:
             - disable-seen-retry
             - movies-metainfo
             - transmission-movies
+            - pushbullet
         filesystem:
             path: "/{? folder.root ?}{? folder.downmovies ?}"
             mask: "*.torrent"
@@ -465,6 +469,7 @@ tasks:
             - reject
             - torrents
             - transmission-movies
+            - pushbullet
         exists_movie:
             - "/{? folder.root ?}{? folder.downmovies ?}"
             - "/{? folder.root ?}{? folder.movies ?}"
