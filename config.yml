@@ -2,6 +2,9 @@
 ##### schedules
 #
 schedules:
+    - tasks: ["web_server"]
+      interval:
+          minutes: 30
     - tasks: ["populate-*", "clean-*", "update-*"]
       interval:
           minutes: 30
@@ -799,3 +802,13 @@ web_server:
     bind: 0.0.0.0
     port: 3539
     web_ui: yes
+watched:
+  manual: yes  # You probably don't need to run this all the time, so you can launch it explicitly with the --tasks flag
+  trakt_emit:
+    username: daweasel27
+    password: as8824672
+    list: Tvshows
+    context: watched  # You can set this to 'collected' depending on the state of your trakt info
+    position: next
+  accept_all: yes
+  set_series_begin: yes
