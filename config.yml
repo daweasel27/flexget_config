@@ -182,14 +182,14 @@ templates:
             path: "/{? folder.root ?}{? folder.downmovies ?}{{movie_name|pathscrub}}"
 
     ##### Pushbullet config#
-      pushbullet:
-        notify:
-          entries:
-            title: "[flexget] {{task}}"
-            message: "{{title}}"
-            via:
-              - pushbullet:
-                  api_key: "{? pushbullet.api ?}"
+    pushbullet:
+      notify:
+        entries:
+          title: "[flexget] {{task}}"
+          message: "{{title}}"
+          via:
+            - pushbullet:
+                api_key: "{? pushbullet.api ?}"
 
     ##### Disable builtins for some tasks#
     disable-seen-retry:
