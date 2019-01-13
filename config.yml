@@ -403,7 +403,7 @@ tasks:
             from:
                 - piratebay:
                       category: highres tv
-                        url: https://piratebaymirror.eu
+                      url: https://piratebaymirror.eu
                 - limetorrents:
                       category: tv
                 - rarbg:
