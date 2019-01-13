@@ -44,6 +44,30 @@ templates:
                 - "*.mkv"
                 - "*.mp4"
 
+    ##### Movies config#
+    movies-HQ:
+        tmdb_lookup: yes
+        movie_list: trakt-movies
+        quality: 1080p webdl+
+        content_size:
+            min: 8000
+            max: 25000
+
+    movies-NQ:
+        tmdb_lookup: yes
+        movie_list: trakt-movies
+        quality: 1080p webdl+
+        content_size:
+            min: 2000
+            max: 7999
+
+    movies-LQ:
+        tmdb_lookup: yes
+        movie_list: trakt-movies
+        quality: 720p webdl+
+        content_size:
+            min: 900
+            max: 8000
 
     ##### Transmission config#
     transmission-anchors:
@@ -148,6 +172,15 @@ templates:
             content_filename: "{{tvdb_series_name|escape|replace('&#39;', '')|pathscrub}} - {{series_id}}{% if tvdb_ep_name|default(False) %} - {{tvdb_ep_name|pathscrub}}{% endif %}{% if quality|default(False) %} - [{{quality}}]{% endif %}"
             path: "/{? folder.root ?}{? folder.downseries ?}{{tvdb_series_name|default(series_name)|pathscrub}}/"
 
+    ##### Transmission movies config#
+    transmission-movies:
+        transmission:
+            <<: *transmission-settings
+            main_file_only: yes
+            include_subs: yes
+            rename_like_files: yes
+            content_filename: "{{tmdb_name|pathscrub}} ({{tmdb_year}}){% if quality|default(False) %} - [{{quality}}]{% endif %}{% if release_group|default(False) %} - [{{release_group}}]{% endif %}"
+            path: "/{? folder.root ?}{? folder.downmovies ?}{{movie_name|pathscrub}}"
 
     ##### Pushbullet config#
     pushbullet:
@@ -376,6 +409,186 @@ tasks:
                 - rarbg:
                       category: [1, 18, 41, 49]
                 - search_rss: https://torrentz2.eu/feed?f=\{{search_term}}
+
+    ########## MOVIES ##########
+
+    ##### Remove manually downloaded movies from the movie queue and trakt list#
+    purge-movies-queue:
+        priority: 11
+        template:
+            - disable-seen-retry
+            - movies-metainfo
+        filesystem:
+            path: "/{? folder.root ?}{? folder.movies ?}"
+            recursive: yes
+            retrieve: files
+            regexp: '.*\.(avi|mkv|mp4)$'
+        accept_all: yes
+        list_remove:
+            - movie_list: trakt-movies
+            - trakt_list:
+                  account: "{? trakt.account ?}"
+                  list: "{? trakt.movies ?}"
+                  type: movies
+
+    ##### Fill the movie queue with movies from trakt list#
+    fill-movies-queue:
+        priority: 12
+        #trakt_list:
+            #account: "{? trakt.account ?}"
+            #list: "{? trakt.movies ?}"
+            #type: movies
+            #strip_dates: yes
+        imdb_watchlist:
+            user_id: ur19926615
+            list: watchlist        
+        accept_all: yes
+        list_add:
+            - movie_list: trakt-movies
+
+    ##### Download movies manually downloaded torrents#
+    download-movies-manual:
+        priority: 13
+        template:
+            - disable-seen-retry
+            - movies-metainfo
+            - transmission-movies
+            - pushbullet
+        filesystem:
+            path: "/{? folder.root ?}{? folder.downmovies ?}"
+            mask: "*.torrent"
+        accept_all: yes
+        exec:
+            on_output:
+                for_accepted: rm -f "{{location}}"
+        list_remove:
+            - movie_list: trakt-movies
+            - trakt_list:
+                  account: "{? trakt.account ?}"
+                  list: "{? trakt.movies ?}"
+                  type: movies
+
+    ##### Discover and download 1080p movies with good bitrate (min. 8GB)#
+
+    ##### Discover and download 1080p movies with good bitrate (min. 8GB)#
+    download-movies-HQ-discover:
+        priority: 14
+        template:
+            - movies-HQ
+            - reject
+            - torrents
+            - transmission-movies
+            - pushbullet
+        exists_movie:
+            - "/{? folder.root ?}{? folder.downmovies ?}"
+            - "/{? folder.root ?}{? folder.movies ?}"
+        magnets: yes
+        convert_magnet:
+            timeout: 180 seconds
+            force: yes
+        seen: local
+        discover:
+            release_estimations: loose
+            interval: 15 minutes
+            what:
+                - movie_list: trakt-movies
+            from:
+                - piratebay:
+                      category: highres movies
+                      url: https://piratebaymirror.eu
+                - limetorrents:
+                      category: movies
+                - rarbg:
+                        category:
+                            - x264 1080p
+        list_match:
+            from:
+                - movie_list: trakt-movies
+        list_remove:
+            - trakt_list:
+                  account: "{? trakt.account ?}"
+                  list: "{? trakt.movies ?}"
+                  type: movies
+
+    ##### Discover and download NQ movies (fullHD min 2GB), if the movie is not recent#
+    download-movies-NQ-discover:
+        priority: 15
+        template:
+            - movies-NQ
+            - reject
+            - torrents
+            - transmission-movies
+            - pushbullet
+        exists_movie:
+            - "/{? folder.root ?}{? folder.downmovies ?}"
+            - "/{? folder.root ?}{? folder.movies ?}"
+        magnets: yes
+        convert_magnet:
+            timeout: 180 seconds
+            force: yes
+        seen: local
+        discover:
+            release_estimations: loose
+            interval: 15 minutes
+            what:
+                - movie_list: trakt-movies
+            from:
+                - piratebay:
+                      category: highres movies
+                      url: https://piratebaymirror.eu
+                - limetorrents:
+                      category: movies
+                - rarbg:
+                        category:
+                            - x264 1080p
+        list_match:
+            from:
+                - movie_list: trakt-movies
+        list_remove:
+            - trakt_list:
+                  account: "{? trakt.account ?}"
+                  list: "{? trakt.movies ?}"
+                  type: movies
+
+    ##### Discover and download lower quality/bitrate movies (1-8GB 720p), if the movie is not recent#
+    download-movies-LQ-discover:
+        priority: 16
+        template:
+            - movies-LQ
+            - reject
+            - torrents
+            - transmission-movies
+            - pushbullet
+        exists_movie:
+            - "/{? folder.root ?}{? folder.downmovies ?}"
+            - "/{? folder.root ?}{? folder.movies ?}"
+        magnets: yes
+        convert_magnet:
+            timeout: 180 seconds
+            force: yes
+        seen: local
+        discover:
+            release_estimations: loose
+            interval: 15 minutes
+            what:
+                - movie_list: trakt-movies
+            from:
+                - piratebay:
+                      category: highres movies
+                      url: https://piratebaymirror.eu
+                - limetorrents:
+                      category: movies
+                - rarbg:
+                        category:
+                            - x264 1080p
+        list_match:
+            from:
+                - movie_list: trakt-movies
+        list_remove:
+            - trakt_list:
+                  account: "{? trakt.account ?}"
+                  list: "{? trakt.movies ?}"
+                  type: movies
 
 
     ########## SUBTITLES (attempt 1/2) ##########
