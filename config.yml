@@ -11,7 +11,7 @@ schedules:
           hour: 2
     ##### Twice a day between 2AM and 7AM: scan existing files, fill queue, check the feeds for latest episodes, discover missing episodes.
     - tasks:
-          ["purge-*", "populate-*", "fill-*", "*-manual", "*-rss", "*-discover"]
+          ["purge-movies-queue", "fill-movies-queue", "download-movies-*"]
       schedule:
           hour: "2-7/2"
     ##### Weekly cleanup of Transmission, Trakt TVshows list (fully watched && ended = delete from list) and harddrive.
