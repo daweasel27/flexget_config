@@ -382,7 +382,12 @@ tasks:
       - transmission-series
       - pushbullet
     inputs:
+      - rss: http://showrss.info/user/1450.rss?magnets=true&namespaces=true&name=null&quality=anyhd&re=yes
       - rss: https://eztv.ag/ezrss.xml
+      - rss: https://rarbg.to/rssdd.php?category=1;18;41;49
+      - rss:
+            url: https://zooqle.com/search?q=%2A+category%3ATV&fmt=rss
+            title: "torrent:fileName"
       - rss: https://www.limetorrents.cc/rss/20/
 
 
@@ -440,6 +445,9 @@ tasks:
             category: highres tv
         - limetorrents:
             category: tv
+        - rarbg:
+            category: [1, 18, 41, 49]
+        - search_rss: https://torrentz2.eu/feed?f=\{{search_term}}
 
 
 ########## ANIME ##########
