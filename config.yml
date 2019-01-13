@@ -430,11 +430,14 @@ tasks:
     ##### Fill the movie queue with movies from trakt list#
     fill-movies-queue:
         priority: 12
-        trakt_list:
-            account: "{? trakt.account ?}"
-            list: "{? trakt.movies ?}"
-            type: movies
-            strip_dates: yes
+        #trakt_list:
+            #account: "{? trakt.account ?}"
+            #list: "{? trakt.movies ?}"
+            #type: movies
+            #strip_dates: yes
+        imdb_watchlist:
+            user_id: ur19926615
+            list: watchlist        
         accept_all: yes
         list_add:
             - movie_list: trakt-movies
