@@ -2,7 +2,7 @@
 schedules:
     ##### YOUR TORRENT CLIENT SHOULD RUN THIS COMMAND AFTER EVERY DOWNLOAD: PATH_TO_flexget/bin/flexget execute --tasks find-* move-*
     ##### Alternatively uncomment this task to process downloaded files every 30min.
-    - tasks: [ 'find-*', 'move-*']
+    - tasks: ["find-*", "move-*"]
         interval:
          minutes: 30
     ##### Every day at 2AM, check nextep to search (necessary if you added a new show to the list but have already watched it partly) and find subtitles attempt #2 (without original name).
@@ -402,6 +402,7 @@ tasks:
             from:
                 - piratebay:
                       category: highres tv
+                        url: https://piratebaymirror.eu
                 - limetorrents:
                       category: tv
                 - rarbg:
