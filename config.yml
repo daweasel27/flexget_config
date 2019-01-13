@@ -6,9 +6,7 @@ schedules:
     #    interval:
     #      minutes: 30
     ##### Every day at 2AM, check nextep to search (necessary if you added a new show to the list but have already watched it partly) and find subtitles attempt #2 (without original name).
-    - tasks: ["*-nextep", get-subtitles]
-      schedule:
-          hour: 2
+
     ##### Twice a day between 2AM and 7AM: scan existing files, fill queue, check the feeds for latest episodes, discover missing episodes.
     - tasks:
           ["purge-movies-queue", "fill-movies-queue", "download-movies-*"]
@@ -298,6 +296,7 @@ tasks:
         template:
             - disable-seen-retry
             - series-metainfo
+        include: series.yml
         list_clear:
             what:
                 - entry_list: trakt-series
@@ -508,6 +507,7 @@ tasks:
             - reject
             - torrents
             - transmission-movies
+            - pushbullet
         exists_movie:
             - "/{? folder.root ?}{? folder.downmovies ?}"
             - "/{? folder.root ?}{? folder.movies ?}"
@@ -543,6 +543,7 @@ tasks:
             - reject
             - torrents
             - transmission-movies
+            - pushbullet
         exists_movie:
             - "/{? folder.root ?}{? folder.downmovies ?}"
             - "/{? folder.root ?}{? folder.movies ?}"
