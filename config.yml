@@ -324,8 +324,12 @@ tasks:
             from:
                 - piratebay:
                       category: highres movies
+                      url: https://piratebaymirror.eu
                 - limetorrents:
                       category: movies
+                - rarbg:
+                        category:
+                            - x264 1080p
         list_match:
             from:
                 - movie_list: trakt-movies
